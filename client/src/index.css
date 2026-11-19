@@ -152,3 +152,28 @@
 /* Landing mobile fix — dropdown anchored to the header after announcement bar */
 .landing-nav{position:relative;z-index:20}
 @media(max-width:640px){.landing-nav nav{top:calc(100% + 10px);z-index:60;max-height:calc(100vh - 112px);overflow:auto}}
+
+/* Dashboard metrics and auth polish */
+.metrics-grid{grid-template-columns:repeat(4,minmax(0,1fr));align-items:stretch}
+.metric-card{min-width:0;display:flex;flex-direction:column;justify-content:flex-start}
+.metric-top{min-width:0;gap:8px}
+.metric-top>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.metric-value{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.metric-detail{max-width:100%;padding-right:4px;line-height:1.45}
+.tf-login{grid-template-columns:minmax(0,420px) minmax(250px,340px);gap:clamp(28px,5vw,68px);place-items:center}
+.auth-side-panel{position:relative;z-index:2;width:min(100%,340px);padding:25px 0;color:#4e4c64}
+.auth-side-kicker{color:#7665df;font-size:9px;font-weight:800;letter-spacing:1.4px}
+.auth-side-panel h2{margin:10px 0 9px;color:#2f2d45;font:750 clamp(23px,2.5vw,31px)/1.15 "Plus Jakarta Sans",sans-serif;letter-spacing:-1.3px}
+.auth-side-panel>p{margin:0;color:#858398;font-size:10px;line-height:1.75}
+.auth-side-list{display:grid;gap:14px;margin-top:24px}
+.auth-side-list>div{display:flex;align-items:flex-start;gap:10px}
+.auth-side-list svg{flex:0 0 auto;margin-top:1px;color:#58ad8d}
+.auth-side-list span{display:grid;gap:3px}
+.auth-side-list b{color:#4e4c64;font-size:10px}
+.auth-side-list small{color:#9694a6;font-size:9px;line-height:1.45}
+.auth-side-note{display:flex;align-items:flex-start;gap:7px;margin-top:25px;padding:10px 11px;border:1px solid #e5f1eb;border-radius:8px;background:#f7fbf9;color:#729080;font-size:8px;line-height:1.5}
+.auth-side-note svg{flex:0 0 auto;color:#58ad8d}
+@media(max-width:1180px){.metrics-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.tf-login{grid-template-columns:minmax(0,420px);gap:0;padding:18px 14px}.auth-side-panel{display:none}.login-card{padding:30px 23px}.login-card h1{font-size:28px}}
+@media(max-width:420px){.metrics-grid{grid-template-columns:1fr}.metric-card{min-height:104px}.tf-login{padding:12px}.login-card{padding:27px 19px}.login-card h1{font-size:25px;letter-spacing:-1.2px}}
+.dark .auth-side-panel h2,.dark .auth-side-list b{color:#eeedf8}.dark .auth-side-panel>p,.dark .auth-side-list small{color:#aaa9ba}.dark .auth-side-note{background:#202d29;border-color:#355046;color:#aac1b4}
