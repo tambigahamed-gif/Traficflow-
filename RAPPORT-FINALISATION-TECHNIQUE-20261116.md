@@ -119,3 +119,11 @@ Validation finale locale : `pnpm check` réussi ; 45 tests métier et sécurité
 - Les uploads officiels LinkedIn et X restent à développer et tester avec des comptes de développement.
 - SASPay reste volontairement bloqué jusqu’à réception de son contrat officiel, protocole webhook et sandbox.
 - Une recette réelle contrôlée reste nécessaire, sans présenter les validations locales comme des validations fournisseur.
+
+## Publication GitHub vérifiée — 19 novembre 2026
+La version finalisée des phases 1 à 5 a été publiée sur `tambigahamed-gif/Traficflow-`, branche `main`, après validation dans ce clone.
+
+- Commit distant : `ab1995ca46998f076719c936b1d088300b180c1d`.
+- Validation : `pnpm check`, 48 tests sur 13 fichiers hors test Supabase à credentials réels, et `pnpm build` réussis.
+- Aucun déploiement Vercel n’a été exécuté.
+- Les migrations Supabase `0016`, `0017`, `0018` et les secrets d’environnement restent à appliquer/configurer séparément.
