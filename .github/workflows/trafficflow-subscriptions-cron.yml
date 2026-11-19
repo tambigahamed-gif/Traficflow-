@@ -1,0 +1,31 @@
+name: TrafficFlow subscriptions scheduler
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trafficflow-subscriptions-cron
+  cancel-in-progress: false
+
+jobs:
+  subscriptions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Déclencher l’expiration des abonnements
+        env:
+          APP_URL: ${{ secrets.TRAFFICFLOW_APP_URL }}
+          CRON_SECRET: ${{ secrets.TRAFFICFLOW_CRON_SECRET }}
+        run: |
+          set -eu
+          test -n "$APP_URL"
+          test -n "$CRON_SECRET"
+          curl --fail-with-body --silent --show-error \
+            --retry 2 --retry-delay 5 --max-time 45 \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${APP_URL%/}/api/cron/subscriptions"

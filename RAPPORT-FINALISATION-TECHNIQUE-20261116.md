@@ -68,3 +68,54 @@ Les URLs ci-dessous sont les sources utilisées pour l’analyse des capacités 
 [5]: https://learn.microsoft.com/en-us/linkedin/marketing/community-management/organizations/share-statistics?view=li-lms-2026-10 "LinkedIn organization share statistics"
 [6]: https://docs.x.com/x-api/fundamentals/metrics "X API metrics"
 [7]: https://developers.tiktok.com/doc/tiktok-api-v2-video-query "TikTok video query"
+
+## Mise à jour locale du 18 novembre 2026 — planificateur gratuit Vercel Hobby
+
+Cette passe n’a pas été poussée sur GitHub et aucun déploiement n’a été lancé.
+
+La configuration `vercel.json` ne déclare désormais plus de cron Vercel. La publication programmée et l’expiration des abonnements restent exposées par `/api/cron/publish` et `/api/cron/subscriptions`, mais sont déclenchées par les workflows GitHub Actions gratuits :
+
+- `.github/workflows/trafficflow-publish-cron.yml` toutes les 5 minutes, par lots de 10 ;
+- `.github/workflows/trafficflow-subscriptions-cron.yml` chaque jour à 03:17 UTC.
+
+Les workflows exigent les secrets GitHub `TRAFFICFLOW_APP_URL` et `TRAFFICFLOW_CRON_SECRET`. Ce dernier doit correspondre à la variable serveur `CRON_SECRET`. Les endpoints refusent toute requête sans l’en-tête exact `Authorization: Bearer <CRON_SECRET>`.
+
+La vérification de cette autorisation a été extraite dans `server/_core/cron-auth.ts` et couverte par trois tests. La concurrence GitHub Actions et la réservation atomique Supabase restent les protections contre les exécutions simultanées et les doublons. Le traitement par lots est limité à 10 dans le workflow et reste plafonné à 50 côté worker.
+
+Résultats de validation locale : `pnpm check` réussi ; 41 tests métier et sécurité réussis sur 11 fichiers en excluant uniquement le test d’intégration Supabase qui exige des credentials réels ; `pnpm build` réussi avec le seul warning Vite de taille de bundle. La validation YAML a été effectuée par contrôle structurel des workflows et `vercel.json` est un JSON valide.
+
+
+## Mise à jour locale du 18 novembre 2026 — phase OAuth et reconnexion
+
+La phase suivante a été implémentée localement, sans push GitHub et sans migration distante. Une migration additive `0016_social_oauth_refresh_status.sql` ajoute `oauth_last_error`, `token_refreshed_at` et `refresh_token_expires_at` pour tracer l’état sans enregistrer de secrets en clair.
+
+Le nouvel endpoint protégé `/api/cron/social-tokens` renouvelle préventivement les tokens arrivant à expiration dans les 15 minutes lorsqu’un refresh token est disponible. Les flux standardisés sont préparés pour YouTube/Google, X, LinkedIn et TikTok. Instagram, Facebook et Threads ne sont pas présentés comme automatiquement renouvelables dans ce code : leurs flux de renouvellement spécifiques nécessitent une validation séparée du fournisseur.
+
+En cas d’échec de renouvellement, TrafficFlow ne simule pas un succès : le compte passe à `error`, l’erreur non secrète est enregistrée dans `oauth_last_error` et l’interface affiche « Reconnexion requise ». Les tokens restent chiffrés AES-256-GCM. Le workflow `.github/workflows/trafficflow-social-tokens-cron.yml` appelle l’endpoint chaque jour à 02:47 UTC avec les mêmes secrets du planificateur externe.
+
+La phase est « code présent, migration et credentials manquants » : la migration 0016 doit être appliquée après 0015 sur Supabase, puis chaque fournisseur doit être testé avec un compte de développement réel. Aucun refresh OAuth réel n’a été exécuté dans le Sandbox.
+
+
+## Mise à jour locale du 18 novembre 2026 — phase 3 publication et Analytics
+
+La phase 3 a été corrigée et validée localement, toujours sans push GitHub, déploiement Vercel, migration Supabase distante, credential réel, publication sociale réelle ou collecte fournisseur réelle.
+
+Le publisher LinkedIn publie désormais le texte via `/rest/posts` et récupère l’identifiant dans l’en-tête `x-restli-id` avec repli sur `body.id`. Il refuse explicitement tout média tant que l’upload officiel Images/Videos/Documents n’est pas intégré ; aucun média LinkedIn ne peut donc produire un faux succès. Le publisher X conserve le même garde-fou pour les médias non téléversés.
+
+Le worker de publication classe les erreurs temporaires fournisseur `408`, `409`, `425`, `429`, `500`, `502`, `503`, `504`, ainsi que les timeouts et erreurs réseau. Il reprogramme au maximum trois tentatives avec un backoff de 1, 2 puis 4 minutes, plafonné à 60 minutes ; une quatrième tentative n’est jamais planifiée. Le résumé expose le compteur `retrying`. Les helpers purs de classification et de backoff sont couverts par des tests déterministes.
+
+La migration additive `0017_analytics_snapshots.sql` crée un stockage idempotent par compte, objet fournisseur, date et source, active RLS, interdit les lectures anonymes et réserve les écritures au service role. Le job `/api/cron/analytics`, protégé par `CRON_SECRET`, collecte réellement les rapports YouTube Analytics et les Insights Instagram lorsqu’un compte connecté dispose d’un token chiffré. Facebook, Threads, X, TikTok et LinkedIn restent explicitement non supportés par ce collecteur tant que les endpoints, permissions et séquences officielles n’ont pas été validés. Aucune ligne fictive n’est créée.
+
+L’écran Analytics charge les snapshots par Workspace via RLS et affiche leurs mesures réelles lorsqu’elles sont présentes. Les abonnés et taux d’engagement sans snapshot fournisseur sont conservés comme valeurs de référence de compte et sont libellés comme telles. L’interface n’annonce plus une synchronisation fictive.
+
+Validation finale locale : `pnpm check` réussi ; 45 tests métier et sécurité réussis sur 12 fichiers en excluant uniquement `server/supabase.credentials.test.ts`, qui exige des credentials Supabase réels ; `pnpm build` réussi pour Vite, le bundle serveur et le handler Vercel. Le seul avertissement est la taille du bundle frontend supérieure à 500 kB. La compatibilité des migrations 0016 et 0017 a été vérifiée par inspection structurelle ; elles restent à appliquer dans l’ordre après 0015, uniquement lorsque l’utilisateur l’autorisera.
+
+## Reste explicitement bloqué après la phase 3
+
+- Les migrations 0016 et 0017 doivent être appliquées à distance dans l’ordre prévu avant activation opérationnelle des jobs OAuth/Analytics.
+- Les credentials, scopes, App Reviews, Business Verification et redirect URIs officiels doivent être configurés par environnement.
+- Les collecteurs Facebook, Threads, X, TikTok et LinkedIn nécessitent encore une validation de permissions et d’API avant toute implémentation.
+- Les statuts asynchrones TikTok et Threads doivent être suivis jusqu’au statut final avant de marquer une publication `published`.
+- Les uploads officiels LinkedIn et X restent à développer et tester avec des comptes de développement.
+- SASPay reste volontairement bloqué jusqu’à réception de son contrat officiel, protocole webhook et sandbox.
+- Une recette réelle contrôlée reste nécessaire, sans présenter les validations locales comme des validations fournisseur.

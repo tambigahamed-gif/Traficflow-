@@ -10,6 +10,7 @@ export type TaskRow = Database["public"]["Tables"]["tasks"]["Row"];
 export type NotificationRow = Database["public"]["Tables"]["notifications"]["Row"];
 export type FolderRow = Database["public"]["Tables"]["media_folders"]["Row"];
 export type WorkflowRow = Database["public"]["Tables"]["automation_workflows"]["Row"];
+export type AnalyticsSnapshotRow = { id: number; workspace_id: string; social_account_id: number; platform: string; provider_object_id: string; metric_date: string; metrics: Record<string, number>; source: string; collected_at: string; created_at: string };
 
 export type WorkspaceSnapshot = {
   accounts: AccountRow[];
@@ -29,6 +30,7 @@ export type WorkspaceSnapshot = {
   planRequests: Database["public"]["Tables"]["plan_change_requests"]["Row"][];
   subscriptionEvents: Database["public"]["Tables"]["subscription_events"]["Row"][];
   invitations: Database["public"]["Tables"]["workspace_invitations"]["Row"][];
+  analyticsSnapshots: AnalyticsSnapshotRow[];
   legacyImported: boolean;
   errors: string[];
 };
@@ -36,7 +38,7 @@ export type WorkspaceSnapshot = {
 export function emptyWorkspaceSnapshot(): WorkspaceSnapshot {
   return {
     accounts: [], assistants: [], media: [], mediaAccountLinks: [], posts: [], members: [], profiles: [], assignments: [], tasks: [],
-    notifications: [], folders: [], workflows: [], workflowRuns: [], usage: null, planRequests: [], subscriptionEvents: [], invitations: [],
+    notifications: [], folders: [], workflows: [], workflowRuns: [], usage: null, planRequests: [], subscriptionEvents: [], invitations: [], analyticsSnapshots: [],
     legacyImported: false, errors: [],
   };
 }
@@ -48,7 +50,7 @@ export async function fetchWorkspaceSnapshot(workspaceId: string, isAdmin: boole
     else if (result.data !== null) assign(result.data);
   };
 
-  const [accounts, assistants, media, mediaAccountLinks, posts, members, assignments, tasks, notifications, folders, workflows, runs, usage, plansReq, events, invites, imports] = await Promise.all([
+  const [accounts, assistants, media, mediaAccountLinks, posts, members, assignments, tasks, notifications, folders, workflows, runs, usage, plansReq, events, invites, imports, analyticsSnapshots] = await Promise.all([
     supabase.from("social_accounts").select("*").eq("workspace_id", workspaceId).order("created_at", { ascending: false }),
     supabase.from("ai_assistants").select("*").eq("workspace_id", workspaceId),
     supabase.from("media").select("*").eq("workspace_id", workspaceId).order("created_at", { ascending: false }),
@@ -66,6 +68,7 @@ export async function fetchWorkspaceSnapshot(workspaceId: string, isAdmin: boole
     supabase.from("subscription_events").select("*").eq("workspace_id", workspaceId).order("created_at", { ascending: false }).limit(50),
     isAdmin ? supabase.from("workspace_invitations").select("*").eq("workspace_id", workspaceId).order("created_at", { ascending: false }).limit(100) : Promise.resolve({ data: [] as Database["public"]["Tables"]["workspace_invitations"]["Row"][], error: null }),
     supabase.from("legacy_imports").select("workspace_id").eq("workspace_id", workspaceId).maybeSingle(),
+    (supabase as any).from("analytics_snapshots").select("*").eq("workspace_id", workspaceId).order("metric_date", { ascending: false }).limit(1000),
   ]);
 
   collect("Comptes", accounts, value => { state.accounts = value; });
@@ -84,6 +87,7 @@ export async function fetchWorkspaceSnapshot(workspaceId: string, isAdmin: boole
   collect("Demandes de plan", plansReq, value => { state.planRequests = value; });
   collect("Historique d’abonnement", events, value => { state.subscriptionEvents = value; });
   collect("Invitations", invites, value => { state.invitations = value; });
+  collect("Snapshots Analytics", analyticsSnapshots, value => { state.analyticsSnapshots = value as AnalyticsSnapshotRow[]; });
   if (imports.error) state.errors.push(`Import historique: ${imports.error.message}`);
   else state.legacyImported = Boolean(imports.data);
 

@@ -11,16 +11,6 @@
       "maxDuration": 30
     }
   },
-  "crons": [
-    {
-      "path": "/api/cron/subscriptions",
-      "schedule": "0 3 * * *"
-    },
-    {
-      "path": "/api/cron/publish",
-      "schedule": "* * * * *"
-    }
-  ],
   "rewrites": [
     {
       "source": "/api/:path*",

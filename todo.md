@@ -27,14 +27,14 @@ Ce document remplace la checklist d’une ancienne variante V2. Pour les détail
 
 ## Incomplet — ne pas commercialiser comme déjà connecté
 
-- OAuth officiel et worker de publication : routes OAuth signées, tokens chiffrés AES-256-GCM, connecteurs des 7 plateformes, réservation atomique et transitions `scheduled → processing → published/failed` livrés. La validation réelle dépend encore des credentials, scopes et App Reviews des fournisseurs.
+- OAuth officiel et worker de publication : routes OAuth signées, tokens chiffrés AES-256-GCM, connecteurs des 7 plateformes, réservation atomique, transitions `scheduled → processing → published/failed` et refresh préventif standardisé ajoutés. La migration 0016 et les tests fournisseurs réels restent nécessaires. La validation réelle dépend encore des credentials, scopes et App Reviews des fournisseurs.
 - Les plateformes sont Instagram, Facebook, TikTok, YouTube, Threads, X et LinkedIn. Les anciennes fiches Messenger ne sont pas supprimées; les limites de média et de format sont documentées dans le guide de déploiement.
 - SASPay/Binance Pay : aucun paiement réel opérationnel. Le code bloque le checkout tant que SASPay n’est pas intégré et ne change jamais le plan sans confirmation validée côté serveur.
 - Analytics et inbox sociales en temps réel : pas de synchronisation via APIs officielles.
 - Workflow d’approbation Business : code client/API et migration additive 0014 ajoutés. Il exige une approbation d’un autre Owner/Admin/Manager avant programmation (snapshot vérifié; notification interne). **La migration 0014 n’a pas été appliquée** : cette fonction n’est pas opérationnelle sur la base tant qu’elle n’est pas examinée puis appliquée manuellement.
 - Business : entités marque/projet distinctes du Workspace et journal d’audit complet non modélisés; le rapport CSV actuel reste un instantané.
 - Intelligence : contenus les plus performants, évolution des interactions et recommandations sociales ne sont pas calculables sans données officielles.
-- Automatisations : règles configurables; le worker de publication est déclenché par `/api/cron/publish` chaque minute via Vercel Cron. Les déclencheurs `post_published` et `post_failed` exécutent maintenant les workflows actifs, inscrivent `automation_runs` et génèrent les notifications/suggestions prévues. `refresh_analytics` reste mis en file jusqu’à l’implémentation des collecteurs officiels.
+- Automatisations : règles configurables; le worker de publication est déclenché par `/api/cron/publish` toutes les 5 minutes via le workflow GitHub Actions gratuit (ou cron-job.org). Les déclencheurs `post_published` et `post_failed` exécutent maintenant les workflows actifs, inscrivent `automation_runs` et génèrent les notifications/suggestions prévues. `refresh_analytics` reste mis en file jusqu’à l’implémentation des collecteurs officiels.
 - E-mails automatiques d’invitation : non configurés; l’envoi du lien est manuel.
 
 ## État Supabase et Vercel

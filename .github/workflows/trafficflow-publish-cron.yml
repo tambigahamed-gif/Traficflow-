@@ -1,0 +1,32 @@
+name: TrafficFlow publish scheduler
+
+on:
+  workflow_dispatch:
+  schedule:
+    # GitHub Actions accepte une fréquence minimale pratique de 5 minutes.
+    - cron: "*/5 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trafficflow-publish-cron
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Déclencher le worker de publication
+        env:
+          APP_URL: ${{ secrets.TRAFFICFLOW_APP_URL }}
+          CRON_SECRET: ${{ secrets.TRAFFICFLOW_CRON_SECRET }}
+        run: |
+          set -eu
+          test -n "$APP_URL"
+          test -n "$CRON_SECRET"
+          curl --fail-with-body --silent --show-error \
+            --retry 2 --retry-delay 5 --max-time 45 \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${APP_URL%/}/api/cron/publish?limit=10"

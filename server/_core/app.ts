@@ -8,8 +8,10 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { getSupabaseAdmin } from "./supabaseAdmin";
 import { verifySaspayWebhook } from "../integrations/saspay";
-import { registerSocialOAuthRoutes } from "../integrations/social-oauth";
+import { refreshExpiringSocialTokens, registerSocialOAuthRoutes } from "../integrations/social-oauth";
+import { runAnalyticsCollectors } from "../integrations/social-analytics";
 import { runPublicationWorker } from "../workers/publication-worker";
+import { isAuthorizedCronRequest } from "./cron-auth";
 
 /**
  * Application Express partagée par le serveur local et la fonction Vercel.
@@ -43,10 +45,9 @@ export async function createApp({ attachFrontend }: AppOptions = {}): Promise<Ap
     res.status(200).json({ ok: true, outcome: data });
   });
 
-  // Tâche planifiée Vercel Cron : renouvellements échus, période de grâce, expirations.
+  // Tâche planifiée externe : renouvellements échus, période de grâce, expirations.
   app.get("/api/cron/subscriptions", async (req: Request, res: Response) => {
-    const secret = process.env.CRON_SECRET ?? "";
-    if (!secret || req.get("authorization") !== `Bearer ${secret}`) return void res.status(401).json({ error: "unauthorized" });
+    if (!isAuthorizedCronRequest(req.get("authorization"), process.env.CRON_SECRET)) return void res.status(401).json({ error: "unauthorized" });
     const admin = getSupabaseAdmin();
     if (!admin) return void res.status(503).json({ error: "not_configured" });
     const { data, error } = await admin.rpc("trafficflow_expire_subscriptions", { p_grace_days: 7 });
@@ -54,9 +55,29 @@ export async function createApp({ attachFrontend }: AppOptions = {}): Promise<Ap
     res.status(200).json({ ok: true, updated: data });
   });
 
+  app.get("/api/cron/social-tokens", async (req: Request, res: Response) => {
+    if (!isAuthorizedCronRequest(req.get("authorization"), process.env.CRON_SECRET)) return void res.status(401).json({ error: "unauthorized" });
+    try {
+      const summary = await refreshExpiringSocialTokens();
+      res.status(200).json({ ok: true, ...summary });
+    } catch (error) {
+      console.error("[Cron] social token refresh failed:", error instanceof Error ? error.message : "unknown");
+      res.status(500).json({ error: "social_token_refresh_failed" });
+    }
+  });
+  app.get("/api/cron/analytics", async (req: Request, res: Response) => {
+    if (!isAuthorizedCronRequest(req.get("authorization"), process.env.CRON_SECRET)) return void res.status(401).json({ error: "unauthorized" });
+    try {
+      const summary = await runAnalyticsCollectors();
+      res.status(200).json({ ok: true, ...summary });
+    } catch (error) {
+      console.error("[Cron] analytics collection failed:", error instanceof Error ? error.message : "unknown");
+      res.status(500).json({ error: "analytics_collection_failed" });
+    }
+  });
+
   app.get("/api/cron/publish", async (req: Request, res: Response) => {
-    const secret = process.env.CRON_SECRET ?? "";
-    if (!secret || req.get("authorization") !== `Bearer ${secret}`) return void res.status(401).json({ error: "unauthorized" });
+    if (!isAuthorizedCronRequest(req.get("authorization"), process.env.CRON_SECRET)) return void res.status(401).json({ error: "unauthorized" });
     try {
       const summary = await runPublicationWorker(Number(req.query.limit ?? 3));
       res.status(200).json({ ok: true, ...summary });

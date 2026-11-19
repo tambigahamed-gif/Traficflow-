@@ -1,0 +1,31 @@
+name: TrafficFlow social token refresh
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "47 2 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trafficflow-social-token-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Renouveler les tokens arrivant à expiration
+        env:
+          APP_URL: ${{ secrets.TRAFFICFLOW_APP_URL }}
+          CRON_SECRET: ${{ secrets.TRAFFICFLOW_CRON_SECRET }}
+        run: |
+          set -eu
+          test -n "$APP_URL"
+          test -n "$CRON_SECRET"
+          curl --fail-with-body --silent --show-error \
+            --retry 2 --retry-delay 5 --max-time 45 \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${APP_URL%/}/api/cron/social-tokens"

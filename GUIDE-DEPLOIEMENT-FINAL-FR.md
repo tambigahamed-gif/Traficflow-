@@ -63,7 +63,7 @@ Le fichier `.env.example` livré liste les noms sans secrets. Dans Vercel, défi
 
 ## 5. Limites connues et production
 
-- OAuth et publication : le code est préparé, mais un déploiement réel nécessite les credentials et validations officielles. Le cron Vercel appelle `/api/cron/publish` chaque minute; le worker réserve atomiquement les posts `scheduled`, puis écrit `processing`, `published` ou `failed` avec l’ID fournisseur et l’erreur.
+- OAuth et publication : le code est préparé, mais un déploiement réel nécessite les credentials et validations officielles. Vercel ne planifie plus la publication. Le workflow GitHub Actions `.github/workflows/trafficflow-publish-cron.yml` appelle `/api/cron/publish` toutes les 5 minutes avec `Authorization: Bearer CRON_SECRET`; le worker réserve atomiquement les posts `scheduled`, puis écrit `processing`, `published` ou `failed` avec l’ID fournisseur et l’erreur.
 - Instagram, TikTok et YouTube nécessitent un média. YouTube publie une vidéo; Facebook, Threads, LinkedIn et X acceptent le texte. X avec média est refusé volontairement tant que l’upload média v2 n’est pas intégré. Les médias LinkedIn doivent être validés séparément selon le type d’asset.
 - SASPay/Binance Pay : aucun paiement réel n’est possible/confirmé. Pas de signature de webhook fournisseur validée, de checkout live ni d’activation d’abonnement par simple retour navigateur.
 - E-mails automatiques d’invitation : non configurés; le partage des invitations reste manuel.
@@ -72,7 +72,28 @@ Le fichier `.env.example` livré liste les noms sans secrets. Dans Vercel, défi
 
 ## 6. Paramètres Vercel et vérification après un futur déploiement
 
-À la racine contenant `package.json` et `vercel.json`, la configuration prévoit l’installation figée, `pnpm build`, `dist/public`, le handler `api/index.ts`, Node 22 et les crons d’abonnement/publication. Définir les variables avant le build, appliquer les migrations, puis vérifier `/`, `/connexion`, `/inscription`, `/dashboard`, `/comptes`, `/calendrier` et `/api/health`. Tester chaque callback OAuth et un post de test privé avant d’ouvrir la publication publique.
+À la racine contenant `package.json` et `vercel.json`, la configuration prévoit l’installation figée, `pnpm build`, `dist/public`, le handler `api/index.ts` et Node 22. Les crons Vercel sont volontairement absents pour rester compatibles avec Vercel Hobby; le déclenchement est externalisé vers GitHub Actions. Définir les variables avant le build, appliquer les migrations, puis vérifier `/`, `/connexion`, `/inscription`, `/dashboard`, `/comptes`, `/calendrier` et `/api/health`. Tester chaque callback OAuth et un post de test privé avant d’ouvrir la publication publique.
+
+
+## 6 bis. Planificateur gratuit compatible Vercel Hobby
+
+Le fichier `vercel.json` ne déclare volontairement aucun cron Vercel. La publication et l’expiration des abonnements sont déclenchées par deux workflows GitHub Actions gratuits :
+
+- `.github/workflows/trafficflow-publish-cron.yml` — toutes les 5 minutes, par lots de 10 ;
+- `.github/workflows/trafficflow-subscriptions-cron.yml` — chaque jour à 03:17 UTC.
+
+Dans les secrets du dépôt GitHub, créer uniquement :
+
+- `TRAFFICFLOW_APP_URL` — URL HTTPS publique de TrafficFlow, sans slash final ;
+- `TRAFFICFLOW_CRON_SECRET` — exactement la même valeur que `CRON_SECRET` dans l’environnement serveur Vercel.
+
+Les workflows utilisent `curl`, échouent si l’endpoint répond en erreur et disposent d’une concurrence séparée pour éviter deux exécutions simultanées du même job. Le serveur refuse tout appel sans `Authorization: Bearer CRON_SECRET`. GitHub Actions peut subir quelques minutes de retard ; le traitement atomique Supabase empêche les doublons. Une alternative compatible est cron-job.org avec les mêmes deux URLs et le même en-tête.
+
+## 6 ter. Renouvellement préventif des tokens sociaux
+
+Le workflow `.github/workflows/trafficflow-social-tokens-cron.yml` appelle `/api/cron/social-tokens` chaque jour. Il utilise `TRAFFICFLOW_APP_URL` et `TRAFFICFLOW_CRON_SECRET`, comme les workflows de publication et d’abonnements.
+
+Avant activation, appliquer la migration additive `0016_social_oauth_refresh_status.sql` après `0015`. Les refresh tokens ne sont jamais affichés dans l’interface ni les logs. YouTube/Google, X, LinkedIn et TikTok disposent d’un chemin de refresh standard préparé ; Instagram, Facebook et Threads restent soumis à une validation de leur flux officiel. Une erreur de refresh marque le compte en reconnexion requise au lieu de déclarer une connexion valide.
 
 ## 7. Commandes de validation
 

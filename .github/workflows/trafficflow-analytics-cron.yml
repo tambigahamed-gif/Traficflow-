@@ -1,0 +1,31 @@
+name: TrafficFlow analytics collectors
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "13 4 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trafficflow-analytics-collectors
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Collecter les métriques disponibles auprès des fournisseurs
+        env:
+          APP_URL: ${{ secrets.TRAFFICFLOW_APP_URL }}
+          CRON_SECRET: ${{ secrets.TRAFFICFLOW_CRON_SECRET }}
+        run: |
+          set -eu
+          test -n "$APP_URL"
+          test -n "$CRON_SECRET"
+          curl --fail-with-body --silent --show-error \
+            --retry 2 --retry-delay 5 --max-time 180 \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${APP_URL%/}/api/cron/analytics"
