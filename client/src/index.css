@@ -177,3 +177,15 @@
 @media(max-width:760px){.tf-login{grid-template-columns:minmax(0,420px);gap:0;padding:18px 14px}.auth-side-panel{display:none}.login-card{padding:30px 23px}.login-card h1{font-size:28px}}
 @media(max-width:420px){.metrics-grid{grid-template-columns:1fr}.metric-card{min-height:104px}.tf-login{padding:12px}.login-card{padding:27px 19px}.login-card h1{font-size:25px;letter-spacing:-1.2px}}
 .dark .auth-side-panel h2,.dark .auth-side-list b{color:#eeedf8}.dark .auth-side-panel>p,.dark .auth-side-list small{color:#aaa9ba}.dark .auth-side-note{background:#202d29;border-color:#355046;color:#aac1b4}
+
+/* Landing analytics preview — make the empty state look intentional */
+.hero-chart{position:relative;min-height:116px;padding:10px 10px 0;border:1px solid #ebe9f5;border-radius:10px;background:linear-gradient(180deg,#fff,#fbfaff);overflow:hidden}
+.hero-chart-head{position:relative;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;color:#77738e;font-size:8px;font-weight:750}
+.hero-chart-head em{padding:4px 6px;border-radius:999px;background:#f4f1ff;color:#8478c9;font-size:7px;font-style:normal;font-weight:700}
+.hero-chart-grid{position:absolute;inset:35px 10px 25px;display:grid;align-content:space-between;pointer-events:none}
+.hero-chart-grid i{display:block;border-top:1px dashed #e7e4f2}
+.hero-chart-line{position:absolute;z-index:2;left:11px;right:11px;top:71px;height:25px;border-top:2px solid #9b8eea;opacity:.72;clip-path:polygon(0 62%,12% 58%,24% 67%,36% 50%,48% 56%,60% 43%,72% 54%,84% 38%,100% 47%,100% 57%,84% 48%,72% 64%,60% 53%,48% 66%,36% 60%,24% 77%,12% 68%,0 72%)}
+.hero-chart-line::after{content:"";position:absolute;right:0;top:-4px;width:6px;height:6px;border:2px solid #8c7de5;border-radius:50%;background:#fff}
+.hero-chart-empty{position:absolute;z-index:3;left:0;right:0;top:78px;color:#aaa6bd;font-size:7px;text-align:center;letter-spacing:.01em}
+.hero-chart-labels{position:absolute;z-index:3;left:10px;right:10px;bottom:7px;display:flex;justify-content:space-between;color:#aaa8b8;font-size:7px}
+@media(max-width:640px){.hero-chart-head{font-size:7px}.hero-chart-empty{font-size:6px}}
