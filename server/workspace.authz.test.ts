@@ -6,6 +6,7 @@ function createAnonymousContext(): TrpcContext {
   return {
     user: null,
     authId: null,
+    isSuperAdmin: false,
     supabase: null,
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
     res: {} as TrpcContext["res"],
@@ -15,12 +16,17 @@ function createAnonymousContext(): TrpcContext {
 describe("workspace API authorization", () => {
   it("rejects workspace listing without an authenticated user", async () => {
     const caller = appRouter.createCaller(createAnonymousContext());
-    await expect(caller.workspace.list()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await expect(caller.workspace.list()).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
   });
 
   it("rejects legacy imports without an authenticated user", async () => {
     const caller = appRouter.createCaller(createAnonymousContext());
-    await expect(caller.legacyImport.importLegacy({ workspaceId: "00000000-0000-4000-8000-000000000001" }))
-      .rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await expect(
+      caller.legacyImport.importLegacy({
+        workspaceId: "00000000-0000-4000-8000-000000000001",
+      })
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
   });
 });

@@ -797,6 +797,30 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_roles: {
+        Row: {
+          user_id: string
+          role: string
+          granted_at: string
+          granted_by: string | null
+          revoked_at: string | null
+        }
+        Insert: {
+          user_id: string
+          role?: string
+          granted_at?: string
+          granted_by?: string | null
+          revoked_at?: string | null
+        }
+        Update: {
+          user_id?: string
+          role?: string
+          granted_at?: string
+          granted_by?: string | null
+          revoked_at?: string | null
+        }
+        Relationships: []
+      }
       social_accounts: {
         Row: {
           avatar_url: string | null

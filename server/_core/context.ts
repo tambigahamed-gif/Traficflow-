@@ -9,38 +9,67 @@ export type TrpcContext = {
   res: CreateExpressContextOptions["res"];
   user: User | null;
   authId: string | null;
+  isSuperAdmin: boolean;
   supabase: SupabaseClient<Database> | null;
 };
 
-function getBearerToken(req: CreateExpressContextOptions["req"]): string | null {
+function getBearerToken(
+  req: CreateExpressContextOptions["req"]
+): string | null {
   const value = req.headers.authorization;
   if (typeof value !== "string") return null;
   const match = /^Bearer\s+(.+)$/i.exec(value.trim());
   return match?.[1] ?? null;
 }
 
-export async function createContext(opts: CreateExpressContextOptions): Promise<TrpcContext> {
-  const base: TrpcContext = { req: opts.req, res: opts.res, user: null, authId: null, supabase: null };
+export async function createContext(
+  opts: CreateExpressContextOptions
+): Promise<TrpcContext> {
+  const base: TrpcContext = {
+    req: opts.req,
+    res: opts.res,
+    user: null,
+    authId: null,
+    isSuperAdmin: false,
+    supabase: null,
+  };
   const token = getBearerToken(opts.req);
   const projectUrl = process.env.VITE_SUPABASE_URL ?? "";
   const publishableKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "";
-  if (!token || !projectUrl || !publishableKey || /service[_-]?role|sb_secret_/i.test(publishableKey)) return base;
+  if (
+    !token ||
+    !projectUrl ||
+    !publishableKey ||
+    /service[_-]?role|sb_secret_/i.test(publishableKey)
+  )
+    return base;
 
   try {
     const client = createClient<Database>(projectUrl, publishableKey, {
-      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
       global: { headers: { Authorization: `Bearer ${token}` } },
     });
     const { data, error } = await client.auth.getUser(token);
     if (error || !data.user) return base;
 
     const userId = data.user.id;
-    const rawName = data.user.user_metadata?.full_name ?? data.user.user_metadata?.name;
+    const rawName =
+      data.user.user_metadata?.full_name ?? data.user.user_metadata?.name;
     const name = typeof rawName === "string" ? rawName : null;
     const email = data.user.email ?? null;
     let localUser = await getUserByOpenId(userId);
     if (!localUser) {
-      await upsertUser({ openId: userId, name, email, loginMethod: "supabase", lastSignedIn: new Date() });
+      await upsertUser({
+        openId: userId,
+        name,
+        email,
+        loginMethod: "supabase",
+        lastSignedIn: new Date(),
+      });
       localUser = await getUserByOpenId(userId);
     }
     if (!localUser) {
@@ -56,12 +85,31 @@ export async function createContext(opts: CreateExpressContextOptions): Promise<
         role: "user",
         createdAt: data.user.created_at ? new Date(data.user.created_at) : now,
         updatedAt: now,
-        lastSignedIn: data.user.last_sign_in_at ? new Date(data.user.last_sign_in_at) : now,
+        lastSignedIn: data.user.last_sign_in_at
+          ? new Date(data.user.last_sign_in_at)
+          : now,
       };
     }
-    return { ...base, user: localUser, authId: userId, supabase: client };
+    const { data: platformRole, error: platformRoleError } = await client
+      .from("platform_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "super_admin")
+      .is("revoked_at", null)
+      .maybeSingle();
+
+    return {
+      ...base,
+      user: localUser,
+      authId: userId,
+      isSuperAdmin: !platformRoleError && platformRole?.role === "super_admin",
+      supabase: client,
+    };
   } catch (error) {
-    console.warn("[Supabase Auth] Unable to verify bearer token:", error instanceof Error ? error.message : "unknown error");
+    console.warn(
+      "[Supabase Auth] Unable to verify bearer token:",
+      error instanceof Error ? error.message : "unknown error"
+    );
     return base;
   }
 }
