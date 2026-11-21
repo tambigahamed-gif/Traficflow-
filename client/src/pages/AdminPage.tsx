@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { BarChart3, CreditCard, FileText, LifeBuoy, LogOut, Menu, Network, PanelLeft, ReceiptText, Settings2, ShieldCheck, UserRound, Users, X } from "lucide-react";
+import { BarChart3, CreditCard, FileText, LifeBuoy, LogOut, Menu, Moon, Network, PanelLeft, ReceiptText, Settings2, ShieldCheck, Sun, UserRound, Users, X } from "lucide-react";
 
 type Section = "overview" | "users" | "subscriptions" | "payments" | "plans" | "social" | "analytics" | "support" | "audit" | "settings";
 
@@ -31,6 +32,7 @@ function State({ loading, error }: { loading?: boolean; error?: boolean }) { if 
 export default function AdminPage() {
   const [section, setSection] = useState<Section>("overview");
   const [open, setOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
   const overview = trpc.admin.overview.useQuery(undefined, { retry: false });
   const users = trpc.admin.users.useQuery(undefined, { enabled: section === "users", retry: false });
   const subscriptions = trpc.admin.subscriptions.useQuery(undefined, { enabled: section === "subscriptions", retry: false });
@@ -73,7 +75,7 @@ export default function AdminPage() {
         <div className="border-t border-slate-100 pt-4 dark:border-slate-800"><Link href="/dashboard" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"><LogOut className="h-4 w-4" />Quitter la console</Link></div>
       </aside>
       {open && <button aria-label="Fermer le menu" className="fixed inset-0 z-30 bg-slate-950/40 lg:hidden" onClick={() => setOpen(false)} />}
-      <main className="min-w-0 flex-1 lg:pl-72"><header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-slate-200/80 bg-[#f7f8fc]/90 px-5 backdrop-blur md:px-10 dark:border-slate-800 dark:bg-slate-950/90"><div className="flex items-center gap-3"><button className="rounded-xl border border-slate-200 bg-white p-2 lg:hidden dark:border-slate-800 dark:bg-slate-900" onClick={() => setOpen(true)}><Menu className="h-5 w-5" /></button><div><div className="flex items-center gap-2 text-sm text-slate-500"><PanelLeft className="h-4 w-4" />Console / <span className="font-semibold text-slate-900 dark:text-white">{current.label}</span></div><p className="mt-1 hidden text-xs text-slate-400 sm:block">Supervision globale de TrafficFlow, sans chiffres de démonstration.</p></div></div><div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300"><span className="h-2 w-2 rounded-full bg-emerald-500" />Sécurisé</div></header>
+      <main className="min-w-0 flex-1 lg:pl-72"><header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-slate-200/80 bg-[#f7f8fc]/90 px-5 backdrop-blur md:px-10 dark:border-slate-800 dark:bg-slate-950/90"><div className="flex items-center gap-3"><button className="rounded-xl border border-slate-200 bg-white p-2 lg:hidden dark:border-slate-800 dark:bg-slate-900" onClick={() => setOpen(true)}><Menu className="h-5 w-5" /></button><div><div className="flex items-center gap-2 text-sm text-slate-500"><PanelLeft className="h-4 w-4" />Console / <span className="font-semibold text-slate-900 dark:text-white">{current.label}</span></div><p className="mt-1 hidden text-xs text-slate-400 sm:block">Supervision globale de TrafficFlow, sans chiffres de démonstration.</p></div></div><div className="flex items-center gap-2"><button type="button" aria-label={theme === "dark" ? "Activer le mode clair" : "Activer le mode sombre"} title={theme === "dark" ? "Mode clair" : "Mode sombre"} onClick={() => toggleTheme?.()} className="group inline-flex h-9 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-300 hover:text-violet-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-violet-700 dark:hover:text-violet-300">{theme === "dark" ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-violet-600" />}<span className="hidden sm:inline">{theme === "dark" ? "Mode clair" : "Mode sombre"}</span></button><div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300"><span className="h-2 w-2 rounded-full bg-emerald-500" />Sécurisé</div></div></header>
         <div className="mx-auto max-w-[1500px] px-5 py-8 md:px-10"><div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end"><div><p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-600">Centre de contrôle</p><h1 className="mt-2 text-3xl font-black tracking-tight md:text-4xl">{current.label}</h1></div><div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900">Source : Supabase réel · lecture serveur</div></div>{renderContent(section, { overview, users, subscriptions, payments, plans, social, analytics, tickets, audit, suspend, createTicket, updateTicket, sectionState })}</div>
       </main>
     </div>
