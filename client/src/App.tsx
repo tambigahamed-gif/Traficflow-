@@ -70,6 +70,7 @@ function GlobalThemeToggle() {
     <button
       type="button"
       aria-label={theme === "dark" ? "Activer le mode clair" : "Activer le mode sombre"}
+      aria-pressed={theme === "dark"}
       title={theme === "dark" ? "Mode clair" : "Mode sombre"}
       onClick={() => toggleTheme?.()}
       className="fixed bottom-5 right-5 z-[60] inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-slate-600 shadow-lg shadow-slate-900/10 backdrop-blur transition hover:-translate-y-0.5 hover:border-violet-300 hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 dark:border-slate-700 dark:bg-slate-900/95 dark:text-slate-200 dark:shadow-black/30 dark:hover:border-violet-600 dark:hover:text-violet-300"

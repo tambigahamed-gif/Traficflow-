@@ -2,6 +2,17 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 
 type Theme = "light" | "dark";
 
+function readStoredTheme(defaultTheme: Theme): Theme {
+  if (typeof window === "undefined") return defaultTheme;
+  try {
+    const stored = window.localStorage.getItem("trafficflow-theme") ?? window.localStorage.getItem("theme");
+    if (stored === "light" || stored === "dark") return stored;
+  } catch {
+    // Certains navigateurs bloquent localStorage en navigation privée.
+  }
+  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : defaultTheme;
+}
+
 interface ThemeContextType {
   theme: Theme;
   toggleTheme?: () => void;
@@ -22,11 +33,7 @@ export function ThemeProvider({
   switchable = false,
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(() => {
-    if (switchable) {
-      const stored = localStorage.getItem("theme");
-      return (stored as Theme) || defaultTheme;
-    }
-    return defaultTheme;
+    return switchable ? readStoredTheme(defaultTheme) : defaultTheme;
   });
 
   useEffect(() => {
@@ -38,7 +45,11 @@ export function ThemeProvider({
     }
 
     if (switchable) {
-      localStorage.setItem("theme", theme);
+      try {
+        window.localStorage.setItem("trafficflow-theme", theme);
+      } catch {
+        // Le thème reste fonctionnel même sans stockage persistant.
+      }
     }
   }, [theme, switchable]);
 
