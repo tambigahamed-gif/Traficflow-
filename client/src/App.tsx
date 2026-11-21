@@ -10,6 +10,7 @@ import LandingPage from "./pages/LandingPage";
 import AuthPage from "./pages/AuthPage";
 import LinkPagesPage, { PublicLinkPage } from "./pages/LinkPagesPage";
 import OnboardingPage from "./pages/OnboardingPage";
+import AdminPage from "./pages/AdminPage";
 function Router() {
   return (
     <Switch>
@@ -22,6 +23,7 @@ function Router() {
       <Route path="/reset-password" component={() => <AuthPage initialMode="reset" />} />
       <Route path="/auth/callback" component={() => <AuthPage initialMode="login" />} />
       <Route path="/onboarding" component={OnboardingPage} />
+      <Route path="/admin" component={AdminPage} />
       <Route path="/p/:slug">{params => <PublicLinkPage slug={params.slug} />}</Route>
       <Route path="/link-pages" component={LinkPagesPage} />
       <Route path="/link-pages/:id" component={LinkPagesPage} />

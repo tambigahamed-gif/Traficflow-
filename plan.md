@@ -31,3 +31,9 @@ Faire évoluer le snapshot V2 existant sans recréer l’application. Les Worksp
 - **Signature** : logo officiel TrafficFlow, halos indigo subtils, cartes arrondies et badges d’état.
 - **Voix** : directe, experte et rassurante. Exemple : « Vos réseaux, enfin orchestrés au même endroit. » / « Commencez gratuitement, gardez le contrôle. »
 - **Positionnement** : cockpit social et Link Pages pour créateurs, marques et équipes.
+
+## Extension approuvée — espace Super Admin
+
+L’espace `/admin` est ajouté sans recréer l’application. Il réutilise React, Wouter, Tailwind, tRPC et le thème TrafficFlow existants. Le serveur protège toutes les procédures par `superAdminProcedure`, puis utilise le client `service_role` uniquement après cette vérification pour lire les données globales. Les plans et quotas existants restent en lecture seule pendant ce chantier.
+
+La migration additive ajoute le journal `admin_audit_log` et les tickets `support_tickets`. Le dashboard affiche uniquement des données Supabase réelles et sépare les sections Dashboard, Utilisateurs, Abonnements, Paiements, Plans, Réseaux sociaux, Analytics, Support, Journal d’activité et Paramètres. Les actions de suspension/réactivation et de support sont confirmées et journalisées. Aucun déploiement ni application de migration en production n’est inclus.

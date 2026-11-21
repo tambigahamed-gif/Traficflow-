@@ -1,0 +1,9 @@
+# Contraintes des APIs Analytics utilisées par TrafficFlow
+
+Ces notes servent à empêcher l’espace Admin d’afficher des promesses ou métriques inexistantes.
+
+- Facebook Pages Insights expose des métriques Page avec `/{page-id}/insights`, une fenêtre et un `period`; les métriques peuvent être retardées, approximatives ou indisponibles selon la Page. Sources : [Facebook Page Insights](https://developers.facebook.com/docs/graph-api/reference/page/insights/) et [Page access tokens](https://developers.facebook.com/docs/pages/access-tokens/).
+- TikTok Display API expose `user/info` et les compteurs de vidéos; les compteurs sont des totaux au moment de la lecture, pas un historique journalier. Sources : [Display API](https://developers.tiktok.com/doc/display-api-overview) et [User info](https://developers.tiktok.com/doc/tiktok-api-v2-get-user-info).
+- Threads Insights utilise `threads_insights` avec des dates explicites; les insights média sont principalement lifetime et l’historique utilisateur n’est pas illimité. Sources : [Threads Insights](https://developers.facebook.com/documentation/threads/insights) et [Threads API](https://developers.facebook.com/documentation/threads/reference/).
+- X Analytics exige des IDs de Posts ou des media keys et des fenêtres `start_time`/`end_time`; cela ne fournit pas un total de compte quotidien générique. Sources : [X Post analytics](https://docs.x.com/x-api/posts/get-post-analytics) et [X Media analytics](https://docs.x.com/x-api/media/get-media-analytics).
+- LinkedIn dépend de l’accès Community Management et de permissions produit; la rétention et les métriques varient selon l’endpoint. Sources : [Community Management](https://learn.microsoft.com/en-us/linkedin/marketing/community-management/community-management-overview?view=li-lms-2026-10) et [Organization statistics](https://learn.microsoft.com/en-us/linkedin/marketing/community-management/organizations/page-statistics?view=li-lms-2026-10).

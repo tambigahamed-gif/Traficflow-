@@ -7,6 +7,7 @@ import { approvalsRouter } from "./routers/approvals";
 import { billingRouter } from "./routers/billing";
 import { contentRouter } from "./routers/content";
 import { legacyImportRouter, workspaceRouter } from "./routers/workspace";
+import { adminRouter } from "./routers/admin";
 
 export const appRouter = router({
   system: systemRouter,
@@ -24,6 +25,7 @@ export const appRouter = router({
   content: contentRouter,
   workspace: workspaceRouter,
   legacyImport: legacyImportRouter,
+  admin: adminRouter,
 });
 
 export type AppRouter = typeof appRouter;
